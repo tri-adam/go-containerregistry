@@ -62,6 +62,25 @@ func TestExtractWhiteout(t *testing.T) {
 	}
 }
 
+func TestExtractWhiteoutOpaque(t *testing.T) {
+	img, err := tarball.ImageFromPath("testdata/whiteout_opaque.tar", nil)
+	if err != nil {
+		t.Fatalf("Error loading image: %v", err)
+	}
+	tr := tar.NewReader(mutate.Extract(img))
+	for {
+		header, err := tr.Next()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if header.Typeflag == tar.TypeDir {
+			if name := header.Name; name == "a/b" {
+				t.Errorf("deleted directory found in tar: %v", name)
+			}
+		}
+	}
+}
+
 func TestExtractOverwrittenFile(t *testing.T) {
 	img, err := tarball.ImageFromPath("testdata/overwritten_file.tar", nil)
 	if err != nil {
